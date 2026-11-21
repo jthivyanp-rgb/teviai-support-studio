@@ -102,7 +102,8 @@ def submit_enquiry():
         form.enquiry_form_error = str(exc)
         return
     form.update(customer_name="", customer_channel=CHANNELS[0], customer_message="",
-                selected_enquiry=enquiry["id"],
+                selected_enquiry=enquiry["id"], detail_pick=enquiry["id"],
+                inbox_query="", inbox_status="All statuses",
                 flash=("success", f"{enquiry['id']} classified as {enquiry['label']}."))
 
 
@@ -128,10 +129,12 @@ def picker(label, records, key):
     if not ids:
         return None
     options = list(ids)
-    selected = st.session_state.selected_enquiry
+    if st.session_state.get(key) not in ids:
+        selected = st.session_state.selected_enquiry
+        st.session_state[key] = selected if selected in ids else options[0]
     choice = st.selectbox(
-        label, options, index=options.index(selected) if selected in ids else 0,
-        key=key, format_func=lambda value: f"{value} · {ids[value]['label']} · {display_name(ids[value])}",
+        label, options, key=key,
+        format_func=lambda value: f"{value} · {ids[value]['label']} · {display_name(ids[value])}",
     )
     return ids.get(choice)
 
@@ -186,18 +189,27 @@ def page_dashboard():
         for column, (label, value) in zip(st.columns(5), metrics):
             column.metric(label, value)
 
+    with st.container(horizontal=True):
+        st.button("Open inbox", type="primary", on_click=navigate, args=("Customer Enquiries",))
+        st.button("Load fictional samples", key="load_samples", on_click=load_samples,
+                  disabled=st.session_state.samples_loaded)
     left, right = st.columns([1, 1.1])
     with left, st.container(border=True):
         st.header("Enquiries by category")
         if enquiries:
             counts = pd.Series([e["label"] for e in enquiries]).value_counts()
             data = counts.rename_axis("Category").reset_index(name="Enquiries")
-            chart = alt.Chart(data).mark_bar(color="#2563EB", cornerRadiusEnd=4).encode(
-                x=alt.X("Enquiries:Q", axis=alt.Axis(tickMinStep=1)),
+            categories = alt.Chart(data).encode(
+                x=alt.X("Enquiries:Q", axis=alt.Axis(tickMinStep=1), scale=alt.Scale(domain=[0, int(counts.max()) + 1])),
                 y=alt.Y("Category:N", title=None, sort="-x",
                         axis=alt.Axis(labelOverlap=False, labelPadding=7, labelLimit=110)),
                 tooltip=["Category:N", "Enquiries:Q"],
-            ).properties(height=max(110, len(counts) * 29)).configure_axis(labelColor="#475569", titleColor="#475569")
+            )
+            bars = categories.mark_bar(color="#2563EB", cornerRadiusEnd=4)
+            values = categories.mark_text(align="left", dx=7, color="#334155").encode(text="Enquiries:Q")
+            chart = (bars + values).properties(height=max(110, len(counts) * 29)).configure_axis(
+                labelColor="#475569", titleColor="#475569",
+            )
             st.altair_chart(chart)
             st.caption(" · ".join(f"{category} {count}" for category, count in counts.items()))
         else:
@@ -209,10 +221,6 @@ def page_dashboard():
                 st.write(f"**{item['action']}** · {item['category']}  \n{item['enquiry_id']} · {item['status']}")
         else:
             st.caption("Classifications, draft changes and review decisions will appear here.")
-    actions = st.columns([1, 1, 2])
-    actions[0].button("Open inbox", type="primary", on_click=navigate, args=("Customer Enquiries",))
-    actions[1].button("Load fictional samples", key="load_samples", on_click=load_samples,
-                      disabled=st.session_state.samples_loaded)
     if enquiries:
         times = pd.to_datetime([e["received_at"] for e in enquiries if e["received_at"]], utc=True, errors="coerce")
         if times.notna().any():
@@ -241,8 +249,10 @@ def page_enquiries():
         st.info("Your inbox is empty. Add a fictional enquiry to begin.")
         return
     one, two = st.columns([2, 1])
-    query = one.text_input("Search enquiries", placeholder="ID, name, category or message").strip().casefold()
-    status_filter = two.selectbox("Status", ("All statuses", *dict.fromkeys(STATUS_LABELS.values())))
+    query = one.text_input("Search enquiries", placeholder="ID, name, category or message",
+                           key="inbox_query").strip().casefold()
+    status_filter = two.selectbox("Status", ("All statuses", *dict.fromkeys(STATUS_LABELS.values())),
+                                  key="inbox_status")
     records = [
         enquiry for enquiry in st.session_state.enquiries
         if (status_filter == "All statuses" or status_of(enquiry) == status_filter)
@@ -431,10 +441,10 @@ def page_log():
     if not rows:
         st.info("No events match these filters.")
         return
-    st.dataframe(log_to_dataframe(rows), hide_index=True)
     st.download_button("Export filtered events (CSV)", log_to_csv(rows), "teviai_activity_log.csv", "text/csv",
                        on_click="ignore")
-    st.caption("The export contains workflow metadata and demo reviewer roles.")
+    st.caption(f"{len(rows)} matching events. The export includes workflow metadata and demo reviewer roles.")
+    st.dataframe(log_to_dataframe(rows), hide_index=True)
     with st.expander("Read event details"):
         index = st.selectbox(
             "Event", range(len(rows)),

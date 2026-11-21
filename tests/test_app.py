@@ -110,6 +110,26 @@ def test_enquiry_form_preserves_other_fields_when_message_is_blank():
     assert at.text_input(key="customer_name").value == ""
 
 
+def test_new_enquiry_is_selected_after_submission_with_filters_active():
+    at = start()
+    at.button(key="load_samples").click().run()
+    page(at, "Customer Enquiries")
+    previous = at.selectbox(key="detail_pick").value
+    at.text_input(key="inbox_query").input("no matching case").run()
+    at.selectbox(key="inbox_status").set_value("Approved — Not Sent").run()
+
+    at.text_input(key="customer_name").input("Fictional newcomer")
+    at.text_area(key="customer_message").input("Where is my parcel?")
+    at.button[1].click().run()
+    assert not at.exception
+    current = at.session_state["enquiries"][-1]
+    assert current["id"] != previous
+    assert at.text_input(key="inbox_query").value == ""
+    assert at.selectbox(key="inbox_status").value == "All statuses"
+    assert at.selectbox(key="detail_pick").value == current["id"]
+    assert "Where is my parcel?" in at.code[0].value
+
+
 @pytest.mark.parametrize("provider_error", [False, True], ids=["model-success", "model-failure"])
 def test_ai_studio_labels_success_and_fallback(monkeypatch, provider_error):
     def fake_provider(message, allowed, key, model):
