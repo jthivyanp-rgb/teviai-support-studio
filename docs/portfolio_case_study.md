@@ -28,3 +28,7 @@ The warning rules are deliberately simple and can miss unfamiliar wording. The s
 ## Lessons
 
 Separating drafting and approval makes authority visible at the point where a decision happens. Restricting provider output can remove entire classes of unsupported generated claims while giving the model a useful, narrow role. A local prototype can demonstrate these controls, while a production pilot would need validated data governance, identity management, escalation ownership and measurement with real stakeholders.
+
+## Contribution and AI assistance
+
+The project owner supplied the project brief, required safeguards and live test inputs, and authorised the public demo and source release. The existing Streamlit project was the starting point. Codex assisted with implementation changes, regression tests, Chrome automation, defect investigation, screenshot capture and documentation. The evidence distinguishes the owner's project decisions from work performed with AI assistance.

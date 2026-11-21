@@ -76,8 +76,10 @@ async function select(surface, label, value) {
 }
 
 async function metrics(surface, expected) {
+  const cards = surface.root.getByTestId('stMetricValue');
+  await cards.nth(expected.length - 1).waitFor({ timeout });
   await ready(surface);
-  const values = (await surface.root.getByTestId('stMetricValue').allTextContents()).map(Number);
+  const values = (await cards.allTextContents()).map(Number);
   assert.deepEqual(values, expected);
 }
 

@@ -14,3 +14,7 @@ Scope covers an unauthenticated, fictional-data demo for small-business support.
 | Spreadsheet evaluates exported metadata | Executable content in a spreadsheet cell | Metadata allowlist and formula-prefix escaping | Spreadsheet behaviour varies. The export should still be treated as data. |
 
 Before a production pilot, design and test authentication, authorisation, durable audit records, customer-data isolation, retention and deletion controls, provider governance and ongoing evaluation. Assess performance on representative, approved test data before relying on the alerts.
+
+## Observed risk controls
+
+The live privacy wording defect, its correction and the results of all 15 scenarios are recorded in the functional register. The safety assessment links the tested safeguards to residual exposure. [Live test register](phase2_live_register.md) · [Responsible AI assessment](responsible_ai_assessment.md)

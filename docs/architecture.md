@@ -38,3 +38,7 @@ flowchart TD
 The normal lifecycle is New → Classified → Draft ready → Pending review → Approved, Rejected, or Escalated. Classified and draft-ready cases can be escalated directly. Pending reviews can return for revision. If the underlying policies changed, the reviewer must regenerate the draft before approving. Terminal statuses close the enquiry in this session.
 
 Events capture timestamp, enquiry ID, action, category, risk level and codes, draft mode, reviewer role, and previous/current status. Free-form messages, draft text, customer names and decision notes are excluded. The reviewer can select a predefined decision reason, which stays with the enquiry.
+
+## Current workspace behaviour
+
+Successful submissions open the new enquiry and clear previous inbox filters. Dashboard and Activity Log controls are placed before their charts or tables. The rule-based draft and human review stages retain the same authority boundaries.

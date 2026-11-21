@@ -13,3 +13,7 @@ Publication changes who can see the source and demo. Obtain TeviAI owner approva
 7. Record the deployment URL, commit, verification date and outcomes in the portfolio. Use the live URL only after verification.
 
 The app has no account sign-in of its own. Shared deployments are suitable only for the fictional demo workflow and do not provide production access controls.
+
+## Final portfolio release
+
+The final [runtime revision](https://github.com/jthivyanp-rgb/teviai-support-studio/commit/350ae7906ac4b5a34d1d84fdd951550c1009c93b) was checked on the public site in a fresh Chrome session. The final test run exercised the updated dashboard, new-enquiry selection, decision controls and CSV. The [final QA review](final_review.md) links the evidence and scope.

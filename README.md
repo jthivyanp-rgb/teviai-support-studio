@@ -6,6 +6,8 @@ TeviAI is an independent GovAI Fellowship portfolio project. Use fictional data 
 
 [Open the public TeviAI demo](https://teviai-support-studio.streamlit.app/)
 
+[Final portfolio PDF](output/pdf/teviai-final-portfolio.pdf) · [Project overview](docs/project_overview.md) · [Final QA review](docs/final_review.md)
+
 ## Run on Windows
 
 Use Python 3.12. In PowerShell from this folder:
@@ -35,6 +37,7 @@ The provider selects an acknowledgement from an allowlist. TeviAI validates the 
 
 - [Architecture and workflow](docs/architecture.md)
 - [Risk assessment](docs/risk_assessment.md)
+- [Responsible AI safety assessment](docs/responsible_ai_assessment.md)
 - [Test report](docs/test_report.md)
 - [Phase 1 website and accessibility audit](docs/phase1_audit.md)
 - [Phase 2 live test register](docs/phase2_live_register.md)

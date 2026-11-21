@@ -1,0 +1,16 @@
+# Responsible AI safety assessment
+
+TeviAI demonstrates how a business can draft replies while keeping decisions with a person. The public demo runs on fictional data with rule-based drafting. The optional provider integration was evaluated using local test doubles.
+
+| Concern | Control in the prototype | Evidence and remaining limitations |
+| --- | --- | --- |
+| Invented business facts | Templates use configured fictional policies and ask staff to check missing information. Screening blocks common unsupported claims in edited replies. | The live cases on prices, opening hours, delivery estimates and warranty covered verification or neutral wording. Paraphrases can evade the patterns and current order or price records are unavailable. |
+| Customer privacy | Recognised values are masked in the UI, and exports include workflow metadata. High-risk privacy requests require escalation. | The synthetic test card was absent from the draft and exported CSV. A live wording miss on “personal information” was fixed and retested. Free text persists in session memory and masking covers recognised patterns. |
+| Human oversight | A draft must be submitted and reviewed by a named demo role. Acknowledging a warning cannot remove a specialist-routing rule or an unsafe-draft block. | The live reviewer edited and approved a safe reply, and approval produced a copyable draft. Privacy and legal cases were escalated by the tester. The demo roles are selectable identities. |
+| Financial or external actions | The workflow has no messaging, order, booking, refund or payment execution integration. Financial requests trigger review and unsupported refund confirmations can block approval. | An unsafe refund confirmation was blocked. The evidence shows an internal workflow outcome. |
+| Customer instruction override | Enquiry text is screened as data. Rule-based drafting follows application policies. The optional provider only handles eligible built-in examples and selects an allowlisted acknowledgement. | The supplied instruction-override case triggered a warning and stayed pending without a human acknowledgement. Detection is heuristic. |
+| Accountability | Decisions log the timestamp, enquiry ID, action, source, risk codes, reviewer role and status. CSV export provides a reviewed subset of those fields. | The evidence export contained approved, rejected and escalated events and no body text. Session history can disappear on reload and has no tamper protection. |
+| Transparency | The draft screen and review flow label the source. Approved replies explicitly show Approved — Not Sent. | The public source label was Rule-Based. Controlled provider tests verify the AI-Assisted label and visible rule-based fallback. |
+| Failure handling | Validation rejects empty or oversized input. Invalid decisions show feedback and preserve available alternatives. Provider errors, invalid outputs and missing credentials lead to a safe local path. | The browser and regression suite cover these cases with synthetic fixtures. A credentialed provider call and provider uptime were outside the evaluation. |
+
+[15-case live register](phase2_live_register.md) · [Risk register](risk_assessment.md) · [Screenshot evidence](screenshots/README.md)

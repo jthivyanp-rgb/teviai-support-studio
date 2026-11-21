@@ -47,3 +47,11 @@ On 21 November 2026, the same 70 tests passed from a fresh anonymous clone of th
 ## Remaining verification
 
 Gemini success, invalid output, refusal to send ineligible cases, and failure are tested with local doubles. A credentialed live provider call, a full cross-browser matrix, assistive technology testing and evaluation with real stakeholders remain outside this run. The tests measure specific behaviours. They do not establish production readiness, detection coverage or operational time savings.
+
+## Final portfolio verification
+
+The final runtime passed 89 Python regression tests and all 15 live functional and safety cases. The original live run had one privacy-routing failure, documented with its corrective action and retest in the [live register](phase2_live_register.md). The final hosted Chrome audit also passed the workflow, mobile emulation at 320 and 390 CSS pixels, and the keyboard checks. Axe-core reported zero violations across 13 checked states. The hosted Safety Lab executed 18 of 18 cases successfully.
+
+The browser run checked new-session isolation, intake, classifier output, dashboard counts, draft creation and editing, human review, approval and clipboard copy, rejection, escalation, filtered CSV and restricted provider availability. Controlled Python tests exercised Gemini response and failure paths. No credentialed Gemini call was part of this release check.
+
+[Final QA review](final_review.md) · [Live screenshots and CSV evidence](screenshots/README.md)
