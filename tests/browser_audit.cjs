@@ -59,8 +59,19 @@ async function go(surface, pageName, { keyboard = false } = {}) {
 }
 
 async function select(surface, label, value) {
-  await chooser(surface, label).click();
-  await surface.root.getByRole('option', { name: value, exact: true }).click();
+  await ready(surface);
+  const control = chooser(surface, label);
+  const option = surface.root.getByRole('option', { name: value, exact: true });
+  await control.click({ timeout });
+  try {
+    await option.waitFor({ timeout: 3000 });
+  } catch (error) {
+    // A widget can rerender between opening its menu and receiving the click.
+    await ready(surface);
+    if (await control.getAttribute('aria-expanded') === 'true') throw error;
+    await control.press('ArrowDown', { timeout });
+  }
+  await option.click({ timeout });
   await ready(surface);
 }
 
@@ -129,6 +140,7 @@ async function enterReview(surface) {
   await button(surface, 'Open in Approval Centre').click();
   await heading(surface, 'Approval Centre').waitFor({ timeout });
   await surface.root.getByRole('tab', { name: 'Review queue' }).click();
+  await ready(surface);
   await select(surface, 'Reviewer', 'Demo Owner');
 }
 

@@ -2,7 +2,7 @@
 
 Checked the TeviAI prototype on 21 November 2026 with Chrome 157, mobile touch emulation, axe-core 4.14.1 and pytest. All test records, names, identifiers and payment examples were fictional. [Public demo](https://teviai-support-studio.streamlit.app/)
 
-The Python regression suite passed 86 tests, including the 18 checks shown in Safety Lab.
+The Python regression suite passed 86 tests, including the 18 checks shown in Safety Lab. The same Chrome workflow passed on the local and public apps. Axe-core reported no violations in 13 checked states on each app. The dashboard gradient text and the high-severity warning were also checked manually. Their lowest measured contrast ratios were 5.45:1 and 6.50:1 respectively.
 
 ## Findings fixed
 
