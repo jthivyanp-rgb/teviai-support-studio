@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 from streamlit.testing.v1 import AppTest
 
+from src import ai_provider
 from src.data_models import Status
 
 PAGES = ["Dashboard", "Customer Enquiries", "Draft Studio", "Approval Centre", "Activity Log", "Settings", "Safety Lab"]
@@ -49,6 +50,8 @@ def test_full_workflow_rule_based_draft_then_approval():
     page(at, "Approval Centre")
     at.button(key=f"approved_{identifier}").click().run()
     assert at.session_state["enquiries"][0]["status"] == Status.PENDING_REVIEW
+    assert not at.button(key=f"rejected_{identifier}").disabled
+    assert not at.button(key=f"escalated_{identifier}").disabled
     at.selectbox(key=f"reviewer_{identifier}").set_value("Demo Owner").run()
     at.checkbox[0].check().run()
     at.button(key=f"approved_{identifier}").click().run()
@@ -88,3 +91,49 @@ def test_reset_requires_confirmation_and_other_sessions_are_isolated():
     assert not one.exception
     assert one.session_state["enquiries"] == []
     assert one.session_state["log"] == []
+
+
+def test_enquiry_form_preserves_other_fields_when_message_is_blank():
+    at = page(start(), "Customer Enquiries")
+    at.text_input(key="customer_name").input("Fictional Visitor")
+    at.selectbox(key="customer_channel").set_value("Website chat")
+    at.button[1].click().run()
+    assert at.error[0].value == "Enter a customer message."
+    assert at.text_input(key="customer_name").value == "Fictional Visitor"
+    assert at.selectbox(key="customer_channel").value == "Website chat"
+    assert at.session_state["enquiries"] == []
+
+    at.text_area(key="customer_message").input("When do you close?")
+    at.button[1].click().run()
+    assert len(at.session_state["enquiries"]) == 1
+    assert at.session_state["enquiries"][0]["customer_name"] == "Fictional Visitor"
+    assert at.text_input(key="customer_name").value == ""
+
+
+@pytest.mark.parametrize("provider_error", [False, True], ids=["model-success", "model-failure"])
+def test_ai_studio_labels_success_and_fallback(monkeypatch, provider_error):
+    def fake_provider(message, allowed, key, model):
+        assert key == "fixture-only"
+        if provider_error:
+            raise TimeoutError("Test provider unavailable")
+        return {"opening": "delay"}
+
+    original_generate = ai_provider.generate_draft
+    monkeypatch.setattr(ai_provider, "generate_draft", lambda *args: original_generate(*args, provider=fake_provider))
+    monkeypatch.setenv("GEMINI_API_KEY", "fixture-only")
+    at = start()
+    at.button(key="load_samples").click().run()
+    at.session_state["mode"] = "AI-Assisted"
+    delivery = at.session_state["enquiries"][1]["id"]
+    at.session_state["selected_enquiry"] = delivery
+    page(at, "Draft Studio")
+
+    assert at.button(key=f"ai_{delivery}").disabled
+    at.checkbox(key=f"consent_{delivery}").check().run()
+    at.button(key=f"ai_{delivery}").click().run()
+    assert not at.exception
+    assert at.session_state["enquiries"][1]["draft_source"] == ("Rule-Based" if provider_error else "AI-Assisted")
+    if provider_error:
+        assert "Used the rule-based draft." in at.warning[0].value
+    else:
+        assert "delay you described" in at.text_area(key=f"draft_editor_{delivery}").value

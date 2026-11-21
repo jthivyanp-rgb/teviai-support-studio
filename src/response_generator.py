@@ -1,6 +1,7 @@
 """Draft replies from approved business policies and neutral templates."""
 
-from .business_config import DEFAULT_BUSINESS_NAME, DEFAULT_POLICIES, POLICY_LABELS
+from .business_config import DEFAULT_BUSINESS_NAME, DEFAULT_POLICIES, POLICY_LABELS, POLICY_TOPIC_KEYWORDS
+from .classification import find_keywords
 from .risk_detection import risk_codes
 
 RULE_BASED_LABEL = "Rule-Based"
@@ -60,10 +61,8 @@ def rule_based_reply(category: str, customer_name: str, policies: dict | None = 
     values = {key: (policies.get(key) or "").strip() or
               f"A team member will check our policy on {label.lower()}."
               for key, label in POLICY_LABELS.items()}
-    if category == "general_enquiry" and message and not any(
-        word in message.lower() for word in ("open", "hours", "saturday", "sunday", "closing")
-    ):
-        values["opening_hours"] = "A member of our team can follow up once we understand what you need."
+    if category == "general_enquiry" and message and not find_keywords(message, POLICY_TOPIC_KEYWORDS["opening_hours"]):
+        values["opening_hours"] = "Could you tell us a little more about what you need help with?"
     template = TEMPLATES.get(category, TEMPLATES["general_enquiry"])
     text = template.format(name=first_name, business=business_name, **values)
     if category != "refund_request" and "REFUND_DECISION" in risk_codes(risks or []):

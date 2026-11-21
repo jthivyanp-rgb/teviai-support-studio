@@ -50,6 +50,19 @@ def test_redaction_removes_personal_data():
     assert "A1043" in redacted
 
 
+@pytest.mark.parametrize("field,value", [
+    ("CVC", "123"), ("card security code", "1234"), ("PIN", "123456"),
+    ("sort code", "12 34 56"), ("date of birth", "01/02/1976"), ("passport number", "F0000000"),
+])
+def test_labelled_sensitive_values_are_masked_and_blocked_in_drafts(field, value):
+    text = f"{field}: {value}"
+    detected = sl.detect_risks(text, "general_enquiry", "medium")
+    assert any(flag["code"] == "PRIVACY_PERSONAL_DATA" and flag["severity"] == "high" for flag in detected)
+    assert sl.redact_pii(text) == f"{field}: [REDACTED]"
+    reply_flags = sl.detect_risks("Hello", "general_enquiry", "low", draft=text)
+    assert "DRAFT_PERSONAL_DATA" in sl.risk_codes(reply_flags)
+
+
 @pytest.mark.parametrize("category", list(sl.CATEGORIES))
 def test_rule_based_templates_make_no_unsupported_promises(category):
     draft = sl.rule_based_reply(category, "Test Customer", sl.DEFAULT_POLICIES)
@@ -119,3 +132,20 @@ def test_csv_export_has_columns_and_blocks_formula_injection():
 def test_unknown_log_field_is_rejected():
     with pytest.raises(KeyError):
         sl.make_log_entry(not_a_field="x")
+
+
+@pytest.mark.parametrize("message", ["When does the shop close?", "What is your closing time?"])
+def test_draft_uses_configured_hours_for_closing_questions(message):
+    result = sl.analyse_enquiry(message)
+    assert result["confidence"] != "low"
+    reply = sl.rule_based_reply(result["category"], "", message=message)["text"]
+    assert sl.DEFAULT_POLICIES["opening_hours"] in reply
+
+
+def test_unrelated_opening_word_does_not_trigger_shop_hours():
+    message = "I am opening a ticket about help."
+    result = sl.analyse_enquiry(message, {})
+    assert "UNCLEAR_POLICY" not in sl.risk_codes(result["risks"])
+    reply = sl.rule_based_reply(result["category"], "", message=message)["text"]
+    assert "tell us a little more" in reply
+    assert sl.DEFAULT_POLICIES["opening_hours"] not in reply

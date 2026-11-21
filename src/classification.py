@@ -2,6 +2,8 @@
 
 import re
 
+from .business_config import POLICY_TOPIC_KEYWORDS
+
 CATEGORIES = {
     "account_privacy": "Privacy",
     "refund_request": "Refund",
@@ -39,8 +41,7 @@ CATEGORY_KEYWORDS = {
         "how do i use", "price", "how much", "cost",
     ],
     "general_enquiry": [
-        "opening hours", "open", "closing", "saturday", "sunday", "located",
-        "visit", "shop hours",
+        *POLICY_TOPIC_KEYWORDS["opening_hours"], "closing", "saturday", "sunday", "located", "visit",
     ],
 }
 

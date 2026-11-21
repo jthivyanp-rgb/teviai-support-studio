@@ -42,7 +42,10 @@ DEFAULT_POLICIES = {
 POLICY_TOPIC_KEYWORDS = {
     "refunds": ["refund", "return", "money back"],
     "delivery": ["delivery", "dispatch", "tracking"],
-    "opening_hours": ["opening hours", "open", "closed"],
+    "opening_hours": [
+        "opening hours", "shop hours", "open", "closed", "opening time", "closing time",
+        "shop close", "store close", "do you close", "are you open",
+    ],
     "privacy": ["personal data", "my data", "delete my account"],
     "warranty": ["warranty", "guarantee"],
     "international_shipping": ["international", "internationally", "overseas", "abroad", "outside the uk"],

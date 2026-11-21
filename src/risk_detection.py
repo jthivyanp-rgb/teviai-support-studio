@@ -8,7 +8,17 @@ from .classification import classify, find_keywords
 EMAIL_RE = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")
 # A run of digits (with optional spaces, dashes, brackets, leading +).
 NUMBER_RUN_RE = re.compile(r"(?<![\w])\+?\d[\d \-()]{7,}\d(?![\w])")
-CREDENTIAL_RE = re.compile(r"(\b(?:password|pin(?: number)?|sort code|cv[cv])\s*(?:is\s+|[:=]\s*))\S+", re.I)
+CREDENTIAL_PATTERNS = tuple(
+    re.compile(rf"(\b(?:{label})\s*(?:is\s+|[:=]\s*)){value}", re.IGNORECASE)
+    for label, value in (
+        (r"password", r"\S+"),
+        (r"cvv|cvc|card security code", r"\d{3,4}\b"),
+        (r"pin(?: number)?", r"\d{4,8}\b"),
+        (r"sort code", r"\d{2}[- ]?\d{2}[- ]?\d{2}\b"),
+        (r"date of birth", r"\d{1,4}[-/.]\d{1,2}[-/.]\d{1,4}\b"),
+        (r"passport(?: number)?", r"[A-Z0-9]{5,12}\b"),
+    )
+)
 SENSITIVE_WORDS = ["password", "date of birth", "bank details", "sort code", "passport", "pin number"]
 
 
@@ -33,11 +43,13 @@ def find_personal_data(text: str) -> list[str]:
     for word in SENSITIVE_WORDS:
         if find_keywords(text, [word]):
             found.append(f"mention of '{word}'")
+    if any(pattern.search(text) for pattern in CREDENTIAL_PATTERNS):
+        found.append("labelled credential or identification value")
     return found
 
 
 def redact_pii(text: str) -> str:
-    """Replace emails, card-like numbers and phone-like numbers with placeholders."""
+    """Mask common email, payment, phone and labelled credential values."""
     text = EMAIL_RE.sub("[EMAIL]", text or "")
 
     def _replace(match: re.Match) -> str:
@@ -48,7 +60,8 @@ def redact_pii(text: str) -> str:
             return "[PHONE]"
         return match.group()
 
-    text = CREDENTIAL_RE.sub(r"\1[REDACTED]", text)
+    for pattern in CREDENTIAL_PATTERNS:
+        text = pattern.sub(r"\1[REDACTED]", text)
     return NUMBER_RUN_RE.sub(_replace, text)
 
 
@@ -74,6 +87,8 @@ PROMISE_PATTERNS = [
     r"\b100 ?%",
     r"\bnever happen again\b",
     r"\brefund (?:has been|is|was) (?:approved|processed|issued|confirmed)\b",
+    r"\b(?:we|i)(?:['’]ve| have)\s+(?:already\s+)?"
+    r"(?:refunded\b|(?:processed|issued|approved)\s+(?:your|the|a)\s+refund\b)",
     r"\bwe will refund\b",
     r"\byou will (?:get|receive) (?:a |your )?(?:full )?refund\b",
     r"\bfree (?:of charge|compensation|replacement|gift)\b",
@@ -85,7 +100,6 @@ CATEGORY_POLICY = {
     "refund_request": "refunds",
     "delivery_issue": "delivery",
     "account_privacy": "privacy",
-    "general_enquiry": "opening_hours",
 }
 
 HIGH, MEDIUM, LOW = "high", "medium", "low"
@@ -120,7 +134,7 @@ def detect_risks(message: str, category: str, confidence: str,
 
     personal = find_personal_data(message)
     if personal:
-        severe = any(p == "payment card number" or p.startswith("mention of") for p in personal)
+        severe = any(kind not in {"email address", "phone number"} for kind in personal)
         risks.append({
             "code": "PRIVACY_PERSONAL_DATA",
             "severity": HIGH if severe else MEDIUM,
@@ -196,11 +210,9 @@ def detect_risks(message: str, category: str, confidence: str,
         })
 
     if draft is not None:
-        if find_personal_data(draft):
-            # Neutral security reminders can mention passwords without including a value.
-            if redact_pii(draft) != draft or re.search(r"\b(?:password|sort code|pin)\s*(?:is|[:=])", draft, re.I):
-                risks.append(flag("DRAFT_PERSONAL_DATA", HIGH, "Sensitive detail in reply",
-                                  "Remove the detected personal or payment detail before approval."))
+        if redact_pii(draft) != draft:
+            risks.append(flag("DRAFT_PERSONAL_DATA", HIGH, "Sensitive detail in reply",
+                              "Remove the detected personal or payment detail before approval."))
         for code, pattern, title, detail in CLAIM_RULES:
             if re.search(pattern, draft, re.I):
                 risks.append(flag(code, HIGH, title, detail))
@@ -243,7 +255,8 @@ CLAIM_RULES = (
      r"(?:shipped|dispatched|delivered|arrived|in transit|out for delivery|will arrive)\b",
      "Order status claim", "Remove order status or timing claims until the business verifies them."),
     ("BOOKING_CLAIM", r"\b(?:booking|appointment|reservation|slot)\s+"
-     r"(?:(?:has been|is|was|will be)\s+)?(?:confirmed|booked|reserved|scheduled)\b"
+     r"(?:(?:(?:for|on|at)\s+[^.!?\n]{1,45}?\s+)?(?:has been|is|was|will be)\s+)?"
+     r"(?:confirmed|booked|reserved|scheduled)\b"
      r"|\b(?:we(?:'ve| have)|you(?:'ve| have))\s+(?:booked|reserved|scheduled)\b",
      "Booking confirmation claim", "Remove the confirmation and refer the request for human verification."),
     ("PRODUCT_CLAIM", r"\b(?:is|are|currently)\s+(?:in stock|available now|sold out)\b"

@@ -19,7 +19,7 @@ from src.business_config import DEFAULT_BUSINESS_NAME, DEFAULT_POLICIES, POLICY_
 from src.classification import CATEGORIES
 from src.data_models import LEGACY_STATUSES, MAX_MESSAGE, MAX_REPLY, REVIEWERS, STATUS_LABELS, Status
 from src.response_generator import rule_based_reply
-from src.risk_detection import find_personal_data, redact_pii, risk_level
+from src.risk_detection import find_personal_data, redact_pii, risk_codes, risk_level
 from src.safety_lab import run_scenarios
 
 st.set_page_config(page_title="TeviAI | Support Studio", page_icon=":material/verified_user:", layout="wide")
@@ -94,6 +94,18 @@ def add_enquiry(name, channel, message, sample_id=""):
     return enquiry
 
 
+def submit_enquiry():
+    form = st.session_state
+    try:
+        enquiry = add_enquiry(form.customer_name, form.customer_channel, form.customer_message)
+    except ValueError as exc:
+        form.enquiry_form_error = str(exc)
+        return
+    form.update(customer_name="", customer_channel=CHANNELS[0], customer_message="",
+                selected_enquiry=enquiry["id"],
+                flash=("success", f"{enquiry['id']} classified as {enquiry['label']}."))
+
+
 def heading(title, description):
     st.title(title)
     st.caption(description)
@@ -133,7 +145,7 @@ def risks_panel(risks):
 
 
 def show_message(enquiry):
-    st.subheader("Customer message")
+    st.header("Customer message")
     st.text(f"{display_name(enquiry)}  ·  {enquiry['channel']}")
     st.caption(f"{enquiry['id']} · {kind_of(enquiry)} · {enquiry['label']} · {status_of(enquiry)}")
     st.code(redact_pii(enquiry["message"]), language=None, wrap_lines=True)
@@ -176,20 +188,22 @@ def page_dashboard():
 
     left, right = st.columns([1, 1.1])
     with left, st.container(border=True):
-        st.subheader("Enquiries by category")
+        st.header("Enquiries by category")
         if enquiries:
-            data = pd.DataFrame({"Category": [e["label"] for e in enquiries]})
+            counts = pd.Series([e["label"] for e in enquiries]).value_counts()
+            data = counts.rename_axis("Category").reset_index(name="Enquiries")
             chart = alt.Chart(data).mark_bar(color="#2563EB", cornerRadiusEnd=4).encode(
-                x=alt.X("count():Q", title="Enquiries", axis=alt.Axis(tickMinStep=1)),
+                x=alt.X("Enquiries:Q", axis=alt.Axis(tickMinStep=1)),
                 y=alt.Y("Category:N", title=None, sort="-x",
                         axis=alt.Axis(labelOverlap=False, labelPadding=7, labelLimit=110)),
-                tooltip=["Category:N", alt.Tooltip("count():Q", title="Enquiries")],
-            ).properties(height=max(110, data["Category"].nunique() * 29))
+                tooltip=["Category:N", "Enquiries:Q"],
+            ).properties(height=max(110, len(counts) * 29)).configure_axis(labelColor="#475569", titleColor="#475569")
             st.altair_chart(chart)
+            st.caption(" · ".join(f"{category} {count}" for category, count in counts.items()))
         else:
             st.caption("Category counts will appear once you add an enquiry or load the fictional samples.")
     with right, st.container(border=True):
-        st.subheader("Recent activity")
+        st.header("Recent activity")
         if events:
             for item in reversed(events[-5:]):
                 st.write(f"**{item['action']}** · {item['category']}  \n{item['enquiry_id']} · {item['status']}")
@@ -212,21 +226,17 @@ def page_enquiries():
     st.button("Load fictional samples", key="inbox_samples", on_click=load_samples,
               disabled=st.session_state.samples_loaded)
     with st.expander("Add an enquiry", expanded=not st.session_state.enquiries):
-        with st.form("new_enquiry", clear_on_submit=True):
+        with st.form("new_enquiry"):
+            st.caption("Use fictional information only. The message can contain up to 4,000 characters.")
             col1, col2 = st.columns(2)
-            name = col1.text_input("Customer name (fictional)", max_chars=70)
-            channel = col2.selectbox("Channel", CHANNELS)
-            message = st.text_area("Customer message", max_chars=MAX_MESSAGE, height=116,
-                                   placeholder="Example: Where is my order?")
-            submitted = st.form_submit_button("Add and classify", type="primary")
-        if submitted:
-            try:
-                enquiry = add_enquiry(name, channel, message)
-            except ValueError as exc:
-                st.error(str(exc))
-            else:
-                st.session_state.selected_enquiry = enquiry["id"]
-                notice(f"{enquiry['id']} classified as {enquiry['label']}.")
+            col1.text_input("Customer name (fictional)", max_chars=70, key="customer_name")
+            col2.selectbox("Channel", CHANNELS, key="customer_channel")
+            st.text_area("Customer message", max_chars=MAX_MESSAGE, height=116,
+                         placeholder="Example: Where is my order?", key="customer_message")
+            st.form_submit_button("Add and classify", type="primary", on_click=submit_enquiry)
+        error = st.session_state.pop("enquiry_form_error", None)
+        if error:
+            st.error(error)
     if not st.session_state.enquiries:
         st.info("Your inbox is empty. Add a fictional enquiry to begin.")
         return
@@ -271,12 +281,13 @@ def page_drafting():
         return
     left, right = st.columns(2)
     policies = st.session_state.policies
+    message_risks = review_risks(enquiry, policies)
     with left, st.container(border=True):
         show_message(enquiry)
-        risks_panel(review_risks(enquiry, policies))
+        risks_panel(message_risks)
         case_controls(enquiry, drafting=True)
     with right, st.container(border=True):
-        st.subheader("Suggested response")
+        st.header("Suggested response")
         if enquiry["status"] == Status.PENDING_REVIEW:
             st.caption("Pending review · " + enquiry["draft_source"])
             st.code(redact_pii(enquiry["final_reply"]), language=None, wrap_lines=True)
@@ -304,7 +315,12 @@ def page_drafting():
         if enquiry["status"] in EDITABLE:
             st.caption(f"{enquiry['draft_source']} · Draft ready")
             reply = st.text_area("Edit draft", enquiry["final_reply"], key=key, height=240, max_chars=MAX_REPLY)
-            risks_panel(review_risks(enquiry, policies, reply))
+            message_codes = risk_codes(message_risks)
+            draft_risks = [risk for risk in review_risks(enquiry, policies, reply) if risk["code"] not in message_codes]
+            if draft_risks:
+                risks_panel(draft_risks)
+            else:
+                st.caption("No additional draft flags detected.")
             save, submit = st.columns(2)
             try:
                 if save.button("Save edits", key=f"save_{enquiry['id']}"):
@@ -361,7 +377,7 @@ def render_review_queue():
     with left, st.container(border=True):
         show_message(enquiry)
     with right, st.container(border=True):
-        st.subheader("Review decision")
+        st.header("Review decision")
         reply = ""
         if is_pending:
             st.caption(f"{enquiry['draft_source']} · Pending review")
@@ -382,18 +398,23 @@ def render_review_queue():
             (Status.REJECTED, "Reject draft", columns[1] if columns else None),
             (Status.ESCALATED, "Escalate", columns[2] if columns else st),
         )
+        selected_action = None
+        for target, label, location in actions:
+            if location and location.button(label, type="primary" if target == Status.APPROVED else "secondary",
+                                            key=f"{target.name.lower()}_{identifier}"):
+                selected_action = target
+        if is_pending:
+            st.button("Return to Draft Studio", key=f"revise_{identifier}", on_click=revise, args=(enquiry,))
+        if selected_action is None:
+            return
         try:
-            for target, label, location in actions:
-                if location and location.button(label, type="primary" if target == Status.APPROVED else "secondary",
-                                                key=f"{target.name.lower()}_{identifier}"):
-                    decide(enquiry, st.session_state.log, target, reviewer, policies, reply=reply,
-                           acknowledged=acknowledged, reason=reason)
-                    st.session_state.selected_enquiry = identifier
-                    notice(f"{identifier} · {status_of(enquiry)}")
-            if is_pending:
-                st.button("Return to Draft Studio", key=f"revise_{identifier}", on_click=revise, args=(enquiry,))
+            decide(enquiry, st.session_state.log, selected_action, reviewer, policies, reply=reply,
+                   acknowledged=acknowledged, reason=reason)
         except ValueError as exc:
             st.error(str(exc))
+        else:
+            st.session_state.selected_enquiry = identifier
+            notice(f"{identifier} · {status_of(enquiry)}")
 
 
 def page_log():
@@ -411,8 +432,19 @@ def page_log():
         st.info("No events match these filters.")
         return
     st.dataframe(log_to_dataframe(rows), hide_index=True)
-    st.download_button("Export filtered events (CSV)", log_to_csv(rows), "teviai_activity_log.csv", "text/csv")
+    st.download_button("Export filtered events (CSV)", log_to_csv(rows), "teviai_activity_log.csv", "text/csv",
+                       on_click="ignore")
     st.caption("The export contains workflow metadata and demo reviewer roles.")
+    with st.expander("Read event details"):
+        index = st.selectbox(
+            "Event", range(len(rows)),
+            format_func=lambda i: f"{rows[i]['action']} · {rows[i]['enquiry_id']} · {rows[i]['timestamp']}",
+        )
+        event = rows[index]
+        st.text(f"Timestamp: {event['timestamp']}\nEnquiry: {event['enquiry_id']}\nAction: {event['action']}\n"
+                f"Category: {event['category']}\nRisk: {event['risk_level']}\nFlags: {event['risk_flags'] or 'None'}\n"
+                f"Draft mode: {event['draft_mode'] or 'None'}\nReviewer: {event['reviewer'] or 'None'}\n"
+                f"Previous status: {event['previous_status'] or 'None'}\nStatus: {event['status']}")
 
 
 def page_settings():

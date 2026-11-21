@@ -28,6 +28,8 @@ def prepare(message):
 @pytest.mark.parametrize("reply", [
     "We will refund you.", "Your booking is confirmed.", "The order has shipped.",
     "The price is £40.", "Your account has been deleted.", "Email: fictional@example.com",
+    "We’ve refunded you.", "We have issued your refund.", "Your booking for Tuesday is confirmed.",
+    "The card security code: 123.",
 ])
 def test_draft_content_blocks_approval_even_when_acknowledged(reply):
     case, events = prepare("Where is my order?")

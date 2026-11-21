@@ -7,6 +7,10 @@
   padding: .48rem .68rem; border-radius: 8px; margin: 0; width: 100%;
 }
 [data-testid="stSidebar"] [role="radiogroup"] label:has(input:checked) { background: #263d61; }
+[data-testid="stSidebar"] [role="radiogroup"] label:has(input:focus-visible) {
+  outline: 2px solid #b8d3ff;
+  outline-offset: -2px;
+}
 .brand { display: flex; gap: .75rem; align-items: center; margin: .2rem 0 1.1rem; }
 .brand-mark {
   display: grid; place-items: center; flex: 0 0 39px; height: 39px; background: #2360d4;
@@ -34,9 +38,12 @@
 [data-testid="stMetricLabel"] p { color: #435571; font-weight: 550; font-size: .83rem; }
 [data-testid="stVerticalBlockBorderWrapper"] > div { border-radius: 14px; }
 [data-testid="stElementContainer"]:has([data-testid="stAlert"]) { min-width: 0; }
-[data-testid="stCodeBlock"] pre { background: #edf3fb; }
-[data-testid="stMarkdownContainer"] h2 { letter-spacing: -.028em; }
-[data-testid="stMarkdownContainer"] h3 { letter-spacing: -.018em; }
+[data-testid="stMain"] [data-testid="stCaptionContainer"] { opacity: 1; }
+[data-testid="stMain"] [data-testid="stCaptionContainer"] p { color: #475569; }
+[data-testid="stSidebar"] [data-testid="stCaptionContainer"] { opacity: 1; }
+[data-testid="stSidebar"] [data-testid="stCaptionContainer"] p { color: #b8c9e5; }
+[data-testid="stMain"] [data-testid="stText"] { white-space: pre-wrap; overflow-wrap: anywhere; }
+[data-testid="stMain"] [data-testid="stHeading"] h2 { font-size: 1.5rem; letter-spacing: -.018em; }
 @media (max-width: 800px) {
   [data-testid="stAppViewBlockContainer"] { padding-left: 1rem; padding-right: 1rem; }
   .hero { min-height: 170px; padding: 1.25rem; }
