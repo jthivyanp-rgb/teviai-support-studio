@@ -143,7 +143,7 @@ def detect_risks(message: str, category: str, confidence: str,
                       + ". Keep these details out of the reply and use the privacy process if needed.",
         })
 
-    if category == "account_privacy" or find_keywords(message, ["personal data", "delete my data", "gdpr"]):
+    if category == "account_privacy" or find_keywords(message, POLICY_TOPIC_KEYWORDS["privacy"]):
         risks.append(flag("PRIVACY_REVIEW", HIGH, "Privacy review required",
                           "Escalate this request to the owner for identity verification."))
     if re.search(PROMPT_INJECTION, message, re.IGNORECASE):

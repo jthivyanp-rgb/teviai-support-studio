@@ -46,7 +46,7 @@ POLICY_TOPIC_KEYWORDS = {
         "opening hours", "shop hours", "open", "closed", "opening time", "closing time",
         "shop close", "store close", "do you close", "are you open",
     ],
-    "privacy": ["personal data", "my data", "delete my account"],
+    "privacy": ["personal data", "personal information", "my data", "delete my account", "gdpr"],
     "warranty": ["warranty", "guarantee"],
     "international_shipping": ["international", "internationally", "overseas", "abroad", "outside the uk"],
     "discounts": ["discount", "coupon", "voucher", "promo code"],

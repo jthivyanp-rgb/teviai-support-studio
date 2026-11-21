@@ -17,9 +17,9 @@ CATEGORIES = {
 # Dictionary order is also the tie-break order (first wins on equal scores).
 CATEGORY_KEYWORDS = {
     "account_privacy": [
-        "account", "password", "log in", "login", "personal data", "my data",
+        "account", "password", "log in", "login", *POLICY_TOPIC_KEYWORDS["privacy"],
         "delete my", "unsubscribe", "my email", "email address", "card details",
-        "payment details", "update my card", "gdpr",
+        "payment details", "update my card",
     ],
     "refund_request": [
         "refund", "money back", "reimburse", "chargeback", "return",

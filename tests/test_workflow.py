@@ -8,6 +8,7 @@ from src.activity_logger import migrate_event
 from src.ai_provider import AI_LABEL, generate_draft
 from src.business_config import DEFAULT_POLICIES
 from src.data_models import REVIEWERS, Status
+from src.risk_detection import risk_codes
 from src.safety_lab import SCENARIOS, draft_for, evaluate
 
 
@@ -41,8 +42,15 @@ def test_draft_content_blocks_approval_even_when_acknowledged(reply):
     assert case["status"] == Status.PENDING_REVIEW
 
 
-def test_privacy_case_requires_escalation():
-    case, events = prepare("Please delete my personal data.")
+@pytest.mark.parametrize(("message", "other_risks"), [
+    ("Please delete my personal data.", set()),
+    ("Please delete all personal information you hold about me.", set()),
+    ("My parcel is missing, I want a refund, and please delete my personal information.", {"REFUND_DECISION"}),
+])
+def test_privacy_case_requires_escalation(message, other_risks):
+    case, events = prepare(message)
+    assert case["category"] == "account_privacy"
+    assert {"PRIVACY_REVIEW", *other_risks} <= risk_codes(case["risks"])
     with pytest.raises(ValueError, match="specialist review"):
         workflow.decide(case, events, Status.APPROVED, REVIEWERS[0], DEFAULT_POLICIES,
                         reply=case["final_reply"], acknowledged=True)
