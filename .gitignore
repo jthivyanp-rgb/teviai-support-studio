@@ -1,0 +1,26 @@
+# Secrets - never commit API keys
+.streamlit/secrets.toml
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
+# Exported activity logs may contain customer data
+*.csv
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Local tooling and temporary verification files
+.env.*
+!.env.example
+.coverage
+tmp/
+.claude/
