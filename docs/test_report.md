@@ -40,6 +40,10 @@ Chromium was exercised against the local loopback server with a 1,440-pixel desk
 
 The initial browser script targeted the wrong clipboard element. The final run targeted the toolbar's copy control and verified what the clipboard actually received. [Product screenshots](screenshots/README.md)
 
+## Hosted verification
+
+On 21 November 2026, the same 70 tests passed from a fresh anonymous clone of the public release commit. A separate HTTP session reached the public Streamlit app without signing in. On the hosted app, the browser workflow completed fictional enquiry search, rule-based drafting, approval with the **Approved — Not Sent** status, privacy escalation and CSV download. The CSV contained both decision types and excluded the names and payment test number. The hosted Safety Lab passed 18 of 18. [Public demo](https://teviai-support-studio.streamlit.app/)
+
 ## Remaining verification
 
-Gemini success, invalid output, refusal to send ineligible cases, and failure are tested with local doubles. A credentialed live provider call, hosting checks, a full cross-browser matrix, assistive technology testing and evaluation with real stakeholders remain outside this run. The tests measure specific behaviours. They do not establish production readiness, detection coverage or operational time savings.
+Gemini success, invalid output, refusal to send ineligible cases, and failure are tested with local doubles. A credentialed live provider call, a full cross-browser matrix, assistive technology testing and evaluation with real stakeholders remain outside this run. The tests measure specific behaviours. They do not establish production readiness, detection coverage or operational time savings.

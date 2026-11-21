@@ -4,6 +4,8 @@ Responsible customer-support automation for small businesses. TeviAI helps a rev
 
 TeviAI is an independent GovAI Fellowship portfolio project. Use fictional data throughout the demo.
 
+[Open the public TeviAI demo](https://teviai-support-studio.streamlit.app/)
+
 ## Run on Windows
 
 Use Python 3.12. In PowerShell from this folder:

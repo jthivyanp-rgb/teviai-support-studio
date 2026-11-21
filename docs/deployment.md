@@ -1,5 +1,7 @@
 # Deploy to Streamlit Community Cloud
 
+The [public TeviAI demo](https://teviai-support-studio.streamlit.app/) was deployed on 21 November 2026 from [release commit `35227c0`](https://github.com/jthivyanp-rgb/teviai-support-studio/commit/35227c067fb05aea1516838925cff6263f4ec33e), using Python 3.12 and rule-based drafting. [Hosted verification](test_report.md#hosted-verification)
+
 Publication changes who can see the source and demo. Obtain TeviAI owner approval for the repository visibility and public app before enabling access.
 
 1. Run the test suite on Python 3.12 and follow the local demo workflow in the README.
