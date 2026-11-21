@@ -37,6 +37,7 @@ The provider selects an acknowledgement from an allowlist. TeviAI validates the 
 - [Risk assessment](docs/risk_assessment.md)
 - [Test report](docs/test_report.md)
 - [Phase 1 website and accessibility audit](docs/phase1_audit.md)
+- [Phase 2 live test register](docs/phase2_live_register.md)
 - [Deployment guide](docs/deployment.md)
 - [Portfolio case study](docs/portfolio_case_study.md) and [PDF](output/pdf/teviai-case-study.pdf)
 
