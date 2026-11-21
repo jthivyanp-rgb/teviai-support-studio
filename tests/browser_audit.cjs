@@ -88,8 +88,7 @@ async function scan(surface, name, scans) {
 }
 
 async function newEnquiry(surface, name, message, category) {
-  const expand = exact(surface, 'Add an enquiry');
-  if (!await box(surface, 'Customer message').isVisible()) await expand.click();
+  await heading(surface, 'Add an enquiry').waitFor({ timeout });
   await box(surface, 'Customer name (fictional)').fill(name);
   const messageBox = box(surface, 'Customer message');
   await messageBox.click();

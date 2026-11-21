@@ -225,15 +225,15 @@ def page_enquiries():
     heading("Customer Enquiries", "Classify, search and open enquiries in this session.")
     st.button("Load fictional samples", key="inbox_samples", on_click=load_samples,
               disabled=st.session_state.samples_loaded)
-    with st.expander("Add an enquiry", expanded=not st.session_state.enquiries):
-        with st.form("new_enquiry"):
-            st.caption("Use fictional information only. The message can contain up to 4,000 characters.")
-            col1, col2 = st.columns(2)
-            col1.text_input("Customer name (fictional)", max_chars=70, key="customer_name")
-            col2.selectbox("Channel", CHANNELS, key="customer_channel")
-            st.text_area("Customer message", max_chars=MAX_MESSAGE, height=116,
-                         placeholder="Example: Where is my order?", key="customer_message")
-            st.form_submit_button("Add and classify", type="primary", on_click=submit_enquiry)
+    with st.form("new_enquiry"):
+        st.header("Add an enquiry")
+        st.caption("Use fictional information only. The message can contain up to 4,000 characters.")
+        col1, col2 = st.columns(2)
+        col1.text_input("Customer name (fictional)", max_chars=70, key="customer_name")
+        col2.selectbox("Channel", CHANNELS, key="customer_channel")
+        st.text_area("Customer message", max_chars=MAX_MESSAGE, height=116,
+                     placeholder="Example: Where is my order?", key="customer_message")
+        st.form_submit_button("Add and classify", type="primary", on_click=submit_enquiry)
         error = st.session_state.pop("enquiry_form_error", None)
         if error:
             st.error(error)

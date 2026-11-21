@@ -7,7 +7,7 @@ The Python regression suite passed 86 tests, including the 18 checks shown in Sa
 ## Findings fixed
 
 - Caption contrast measured 4.42:1 on the deployed baseline. The updated caption colors measure 7.24:1 against the main canvas. Chart values now also appear as text, headings follow the page hierarchy, keyboard navigation has a visible focus outline, and Activity Log offers a plain-text view of each event. [WCAG text contrast](https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum.html)
-- A blank message used to clear the other form fields. The form now keeps those fields while showing the error.
+- The collapsible inbox form could interfere with focusing the message field on the hosted mobile layout. The form is now directly available and a blank message preserves the other fields while showing the error.
 - A blocked approval used to hide Reject, Escalate and Return to Draft Studio until the next interaction. All review actions now stay visible when a validation error appears.
 - Draft Studio now shows enquiry warnings by the customer message and any additional draft warnings by the editor.
 - Closing-time questions now use the configured hours. Unclear questions ask for clarification.
